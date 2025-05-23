@@ -33,6 +33,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.springframework.grpc:spring-grpc-server-web-spring-boot-starter")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("com.ocadotechnology.gembus:test-arranger:1.6.4")
 
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
