@@ -34,12 +34,21 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-auth-jvm") // это не сильно надо
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
 
     // OpenAPI & Swagger (для документации)
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-swagger")
+
+    // Dropwizard Metrics (для мониторинга)
+    implementation("io.ktor:ktor-server-metrics-micrometer-jvm") // Основа для метрик
+//    implementation("io.ktor:ktor-server-metrics-dropwizard-jvm:1.6.8") // Интеграция с Dropwizard
+    implementation("io.dropwizard.metrics:metrics-core:4.2.25")  // Ядро Dropwizard Metrics
+
+    // Micrometer (опционально, если нужны другие экспортеры - Prometheus, JMX и т. д.)
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.0")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
@@ -52,12 +61,22 @@ openApiGenerate {
     outputDir.set("${buildDir}/generated")  // Выходная директория
     apiPackage.set("ru.vood.data.geration.api")  // Пакет для API-роутов
     modelPackage.set("ru.vood.data.geration.model")  // Пакет для DTO-моделей
+//    globalProperties.set(
+//
+//        mapOf(
+////            ЭskipDefaultInterf
+//            "models" to "",  // Генерируем модели
+//            "apis" to "true"  // Отключаем генерацию API
+//        )
+//    )
     configOptions.set(
         mapOf(
             "library" to "ktor",  // Используем Ktor
             "serializationLibrary" to "kotlinx_serialization",  // Сериализация
             "sourceFolder" to "src/main/kotlin",  // Куда складывать сгенерированный код
-            "excludeAuth" to "true"  // отключение аутентификации
+            "excludeAuth" to "true",  // отключение аутентификации
+            "excludeMetrics" to "true",
+            "excludeCompression" to "true"  // Отключает генерацию Compression
         )
     )
 }
