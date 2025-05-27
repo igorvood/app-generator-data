@@ -1,4 +1,4 @@
-package com.example
+package ru.vood.data.geration
 
 import io.ktor.server.application.*
 
