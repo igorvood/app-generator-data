@@ -1,83 +1,34 @@
-import com.google.protobuf.gradle.id
+val koin_version: String by project
+val kotlin_version: String by project
+val logback_version: String by project
 
 plugins {
     kotlin("jvm")
-    kotlin("plugin.spring")
-    id("org.springframework.boot") version "3.5.0"
-    id("io.spring.dependency-management") version "1.1.7"
-    id("com.google.protobuf") version "0.9.4"
+    id("io.ktor.plugin") version "3.1.3"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.10"
 }
 
-group = "ru.vood.gendata"
-version = "0.0.1-SNAPSHOT"
+group = "com.example"
+version = "0.0.1"
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+application {
+    mainClass = "io.ktor.server.netty.EngineMain"
 }
 
 repositories {
     mavenCentral()
 }
 
-extra["springGrpcVersion"] = "0.8.0"
-
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("io.grpc:grpc-services")
-    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    implementation("org.springframework.grpc:spring-grpc-server-web-spring-boot-starter")
-    implementation("org.springframework.kafka:spring-kafka")
-    implementation("com.ocadotechnology.gembus:test-arranger:1.6.4")
-
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.projectreactor:reactor-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-    testImplementation("org.springframework.grpc:spring-grpc-test")
-    testImplementation("org.springframework.kafka:spring-kafka-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.grpc:spring-grpc-dependencies:${property("springGrpcVersion")}")
-    }
-}
-
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.addAll("-Xjsr305=strict")
-    }
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc"
-    }
-    plugins {
-        id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java"
-        }
-    }
-    generateProtoTasks {
-        all().forEach {
-            it.plugins {
-                id("grpc") {
-                    option("jakarta_omit")
-                    option("@generated=omit")
-                }
-            }
-        }
-    }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    implementation("org.openfolder:kotlin-asyncapi-ktor:3.1.1")
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+    implementation("io.ktor:ktor-server-core")
+    implementation("io.ktor:ktor-server-content-negotiation")
+    implementation("io.ktor:ktor-serialization-kotlinx-json")
+    implementation("io.ktor:ktor-server-netty")
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.ktor:ktor-server-config-yaml")
+    testImplementation("io.ktor:ktor-server-test-host")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
