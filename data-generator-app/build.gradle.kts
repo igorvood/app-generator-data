@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 val koin_version: String by project
 val kotlin_version: String by project
@@ -6,16 +7,20 @@ val logback_version: String by project
 
 plugins {
     kotlin("jvm")
-    id("io.ktor.plugin") version "3.1.3"
+    kotlin("plugin.spring") version "2.1.10"
+    id("org.springframework.boot") version "3.5.0"
+    id("io.spring.dependency-management") version "1.1.7"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.10"
-    id("org.openapi.generator") version "7.13.0"
+    id("org.openapi.generator") version "7.10.0"
 }
 
 group = "ru.vood.data.generator"
 version = "0.0.1"
 
-application {
-    mainClass = "io.ktor.server.netty.EngineMain"
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
@@ -23,65 +28,69 @@ repositories {
 }
 
 dependencies {
-    implementation("org.openfolder:kotlin-asyncapi-ktor:3.1.1")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+//    implementation("org.openapitools:openapi-generator:7:10:0")
+    implementation("org.openapitools:openapi-generator:7.10.0")
 
-    implementation("io.insert-koin:koin-ktor:$koin_version")
-    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-core")
-    implementation("io.ktor:ktor-server-resources")
-    implementation("io.ktor:ktor-server-content-negotiation")
-    implementation("io.ktor:ktor-serialization-kotlinx-json")
-    implementation("io.ktor:ktor-server-netty")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("io.ktor:ktor-server-auth-jvm") // это не сильно надо
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("io.ktor:ktor-server-config-yaml")
-
-    // OpenAPI & Swagger (для документации)
-    implementation("io.ktor:ktor-server-openapi")
-    implementation("io.ktor:ktor-server-swagger")
-
-    // Dropwizard Metrics (для мониторинга)
-    implementation("io.ktor:ktor-server-metrics-micrometer-jvm") // Основа для метрик
-//    implementation("io.ktor:ktor-server-metrics-dropwizard-jvm:1.6.8") // Интеграция с Dropwizard
-    implementation("io.dropwizard.metrics:metrics-core:4.2.25")  // Ядро Dropwizard Metrics
-
-    // Micrometer (опционально, если нужны другие экспортеры - Prometheus, JMX и т. д.)
-    implementation("io.micrometer:micrometer-registry-prometheus:1.12.0")
-
-    testImplementation("io.ktor:ktor-server-test-host")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.projectreactor:reactor-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xjsr305=strict")
+    }
+}
+
+val openApiConfigOptions = mapOf(
+    "serializationLibrary" to "kotlinx_serialization",
+//    "serializationLibrary" to "jackson",
+
+    "interfaceOnly" to "true",
+//    "library" to "jvm-spring-restclient",
+//    "library" to "jvm-spring-webclient",
+
+//    "library" to "jvm-ktor",
+
+//    "useSpringBoot3" to "true",
+
+
+//    "dateLibrary" to "kotlinx-datetime",
+//    "explicitApi" to "true",
+)
+
+
+//tasks.withType<Jar> {
+//    dependsOn(
+//        "t1",
+//    )
+//}
 
 // Конфигурация OpenAPI Generator
+//tasks.register<GenerateTask>("t1") {
 openApiGenerate {
-    generatorName.set("kotlin-server")  // Генератор для Ktor
+    id.set("kotlin-spring")
+    generatorName.set("kotlin")  // Генератор для Ktor
     inputSpec.set("${projectDir}/src/main/resources/openapi/openapi.yml")  // Путь к OpenAPI-спецификации
-    outputDir.set("${buildDir}/generated")  // Выходная директория
+    outputDir.set("${layout.buildDirectory.get()}/generated")  // Выходная директория
     apiPackage.set("ru.vood.data.geration.api")  // Пакет для API-роутов
     modelPackage.set("ru.vood.data.geration.model")  // Пакет для DTO-моделей
-//    globalProperties.set(
-//
-//        mapOf(
-////            ЭskipDefaultInterf
-//            "models" to "",  // Генерируем модели
-//            "apis" to "true"  // Отключаем генерацию API
-//        )
-//    )
-    configOptions.set(
-        mapOf(
-            "library" to "ktor",  // Используем Ktor
-            "serializationLibrary" to "kotlinx_serialization",  // Сериализация
-            "sourceFolder" to "src/main/kotlin",  // Куда складывать сгенерированный код
-            "excludeAuth" to "true",  // отключение аутентификации
-            "excludeMetrics" to "true",
-            "excludeCompression" to "true"  // Отключает генерацию Compression
-        )
-    )
+    configOptions.set(openApiConfigOptions)
+    globalProperties.set(mapOf("models" to ""))
+    generateModelTests = false
 }
 
-// Добавляем сгенерированный код в исходники
+
 sourceSets {
     main {
         kotlin {
@@ -91,9 +100,9 @@ sourceSets {
 }
 
 // Зависимость компиляции от генерации OpenAPI
-tasks.withType<KotlinCompile> {
-    dependsOn("openApiGenerate")
-}
+//tasks.withType<KotlinCompile> {
+//    dependsOn("openApiGenerate")
+//}
 
 // Конфигурация Ktor
 //ktor {
@@ -102,6 +111,13 @@ tasks.withType<KotlinCompile> {
 //    }
 //}
 
+// Добавляем сгенерированный код в исходники
+//kotlin.sourceSets["main"].kotlin.srcDirs("${layout.buildDirectory.get()}/generated/src/main/kotlin")
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+//tasks.withType<KotlinCompile>{
+//    dependsOn("openApiGenerator")
+//}
