@@ -38,6 +38,12 @@ dependencies {
 //    implementation("org.openapitools:openapi-generator:7:10:0")
     implementation("org.openapitools:openapi-generator:7.10.0")
 
+    implementation(platform("io.arrow-kt:arrow-stack:2.1.1"))
+    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.10.2"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    api("io.arrow-kt:arrow-core-jvm:2.1.1")
+    implementation("com.ocadotechnology.gembus:test-arranger:1.6.4")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
